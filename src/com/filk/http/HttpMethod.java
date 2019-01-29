@@ -1,5 +1,8 @@
 package com.filk.http;
 
+import com.filk.exceptions.ErrorType;
+import com.filk.exceptions.ServerException;
+
 public enum HttpMethod {
     GET("get", "read"),
     POST("post", "add"),
@@ -14,14 +17,14 @@ public enum HttpMethod {
         this.restAction = restAction;
     }
 
-    public static HttpMethod getByName(String name) throws IllegalArgumentException {
+    public static HttpMethod getByName(String name) {
         HttpMethod[] httpMethods = values();
         for (HttpMethod httpMethod : httpMethods) {
             if (httpMethod.name.equalsIgnoreCase(name)) {
                 return httpMethod;
             }
         }
-        throw new IllegalArgumentException("No method for name: " + name + " found");
+        throw new ServerException(ErrorType.METHOD_NOT_ALLOWED);
     }
 
     public String getName() {

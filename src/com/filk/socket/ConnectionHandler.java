@@ -1,9 +1,8 @@
 package com.filk.socket;
 
-import com.filk.http.HttpMethod;
-import com.filk.http.Request;
-import com.filk.http.Response;
-import com.filk.http.ResponseCode;
+import com.filk.exceptions.ErrorType;
+import com.filk.exceptions.ServerException;
+import com.filk.http.*;
 import com.filk.io.ReaderWriter;
 
 import java.io.*;
@@ -12,14 +11,14 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
-class Connection implements Runnable {
+class ConnectionHandler implements Runnable {
     private Socket socket;
     private Server.ServerType serverType;
     private String resourcePath;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
 
-    Connection(Socket socket, Server.ServerType serverType, String resourcePath) {
+    ConnectionHandler(Socket socket, Server.ServerType serverType, String resourcePath) {
         try {
             this.socket = socket;
             this.serverType = serverType;
@@ -58,30 +57,31 @@ class Connection implements Runnable {
     }
 
     private void processWeb() throws IOException {
-        ResponseCode responseCode;
-        List<String> responseBody = new ArrayList<>();
+        //List<String> responseBody = new ArrayList<>();
+        //InputStream inputStream;
         try {
-            Request request = new Request(bufferedReader);
-            if (request.isGoodRequest() && request.getHttpMethod() == HttpMethod.GET) {
-                String filePath =  resourcePath + File.separator + request.getHttpUri().replace('/', File.separatorChar);
-                File file = new File(filePath);
-                if (file.exists()) {
-                    responseCode = ResponseCode.OK;
-                    responseBody = ReaderWriter.readLines(new FileInputStream(file));
-                } else {
-                    responseCode = ResponseCode.NOT_FOUND;
-                }
-            } else {
-                responseCode = ResponseCode.BAD_REQUEST;
-            }
-        } catch (IOException e) {
-            responseCode = ResponseCode.SERVER_ERROR;
+            // request parser
+            // content reader
+            Request request = RequestParser.parseRequest(bufferedReader, resourcePath);
+
+
+            // response writer
+            //Response response = new Response();
+            Response.writeSuccessResponse(bufferedWriter, socket.getOutputStream(), request.getBodyContentInputStream());
+
+        } catch(ServerException e) {
+            Response.writeErrorResponse(bufferedWriter, e.getErrorType());
+        } catch (Exception e) {
+            Response.writeErrorResponse(bufferedWriter, ErrorType.INTERNAL_SERVER_ERROR);
         }
 
-        Response response = new Response(responseCode, responseBody);
-        ReaderWriter.writeLines(socket.getOutputStream(), response.getResponseStrings());
+
+//        Response response = new Response(responseCode, responseBody);
+//        ReaderWriter.writeLines(socket.getOutputStream(), response.getResponseStrings());
 
         bufferedReader.close();
         bufferedWriter.close();
     }
+
+
 }

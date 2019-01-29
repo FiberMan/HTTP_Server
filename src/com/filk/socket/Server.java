@@ -31,17 +31,14 @@ public class Server {
     }
 
     public void start() throws IOException {
-        ServerSocket serverSocket = new ServerSocket(port);
-        System.out.println("Server started");
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server started");
 
-        while (true) {
-            try {
-                Socket socket = serverSocket.accept();          // почему сокет закрывается, если его взять в скобки: try (Socket....)   ?
-                Connection connection = new Connection(socket, serverType, resourcePath);
-                Thread thread = new Thread(connection);
-                thread.start();
-            } catch (IOException e) {
-                e.printStackTrace();
+            while (true) {
+                    Socket socket = serverSocket.accept();          // почему сокет закрывается, если его взять в скобки: try (Socket....)   ?
+                    ConnectionHandler connection = new ConnectionHandler(socket, serverType, resourcePath);
+                    Thread thread = new Thread(connection);
+                    thread.start();
             }
         }
     }
