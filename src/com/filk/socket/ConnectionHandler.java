@@ -3,13 +3,9 @@ package com.filk.socket;
 import com.filk.exceptions.ErrorType;
 import com.filk.exceptions.ServerException;
 import com.filk.http.*;
-import com.filk.io.ReaderWriter;
-
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 
 class ConnectionHandler implements Runnable {
     private Socket socket;
@@ -57,28 +53,14 @@ class ConnectionHandler implements Runnable {
     }
 
     private void processWeb() throws IOException {
-        //List<String> responseBody = new ArrayList<>();
-        //InputStream inputStream;
         try {
-            // request parser
-            // content reader
             Request request = RequestParser.parseRequest(bufferedReader, resourcePath);
-
-
-            // response writer
-            //Response response = new Response();
             Response.writeSuccessResponse(bufferedWriter, socket.getOutputStream(), request.getBodyContentInputStream());
-
         } catch(ServerException e) {
             Response.writeErrorResponse(bufferedWriter, e.getErrorType());
         } catch (Exception e) {
             Response.writeErrorResponse(bufferedWriter, ErrorType.INTERNAL_SERVER_ERROR);
         }
-
-
-//        Response response = new Response(responseCode, responseBody);
-//        ReaderWriter.writeLines(socket.getOutputStream(), response.getResponseStrings());
-
         bufferedReader.close();
         bufferedWriter.close();
     }
